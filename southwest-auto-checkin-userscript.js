@@ -1,8 +1,10 @@
 // ==UserScript==
 // @name           Auto Check-In to Southwest Flights
-// @namespace      https://userscripts-mirror.org/users/83813
+// @namespace      https://github.com/levydvm/southwest-auto-checkin/
+// @version        2.0
 // @description    Automatically check in to Southwest Airline flights at the appropriate time.
 // @icon           https://www.google.com/s2/favicons?domain=southwest.com
+// @downloadURL    https://cdn.jsdelivr.net/gh/levydvm/southwest-auto-checkin/southwest-auto-checkin-userscript.js
 // @include        https://www.southwest.com/air/check-in/
 // @include        https://www.southwest.com/air/check-in/*
 // @include        https://southwest.com/air/check-in/
