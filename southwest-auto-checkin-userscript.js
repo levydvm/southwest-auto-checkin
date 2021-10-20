@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           Auto Check-In to Southwest Flights
 // @namespace      https://github.com/levydvm/southwest-auto-checkin/
-// @version        2.0
+// @version        2.1
 // @description    Automatically check in to Southwest Airline flights at the appropriate time.
 // @icon           https://www.google.com/s2/favicons?domain=southwest.com
 // @downloadURL    https://cdn.jsdelivr.net/gh/levydvm/southwest-auto-checkin/southwest-auto-checkin-userscript.js
@@ -9,6 +9,8 @@
 // @include        https://www.southwest.com/air/check-in/*
 // @include        https://southwest.com/air/check-in/
 // @include        https://southwest.com/air/check-in/*
+// @include        https://www.southwest.com/air/manage-reservation/view.*
+// @include        *.southwest.com/air/manage-reservation/view.*
 // @exclude        *southwest.com/air/check-in/confirmation*
 // @license        GPL version 3 or any later version; http://www.gnu.org/copyleft/gpl.html
 // @run-at         document-idle
@@ -479,4 +481,241 @@ else if(/check-in/.test(document.location.href))
 	waitForKeyElements ('.retrieve-reservation-form-container--placements', checkInPageFormEdit);
 }
     // close function delaying execution until page loaded
+}
+
+////////////////////////////////////// SET UP AUTOCHECKIN FROM MANAGE RESERVATION PAGE ////////////////////////
+// declare global variables
+var globalSubmitDate;
+var confNumber
+var fullName
+var firstName
+var lastName
+var firstLeg
+var departDate
+var departTime
+var departAMPM
+var departDateTime
+var checkinDate
+var month
+var day
+var year
+var hour
+var minute
+var minVar
+var airportCode
+var secondsArray = []
+var secondsValues = []
+var reservationDiv
+var checkinDiv
+var runOncePlease = false
+waitForKeyElements ('.reservation_first', actionFunction4, true);
+function actionFunction4 (jNode) {
+/**
+ * @brief Begins the delay at the next even second.
+ */
+function getReservationInfo () {
+		try {
+			confNumber = document.getElementsByClassName("confirmation-number--code")[0].innerHTML;
+			fullName = document.getElementsByClassName("reservation-name--person-name")[0].innerHTML;
+			firstName = fullName.split(" ")[0];
+			lastName = fullName.split(" ").pop();
+
+			firstLeg = document.getElementsByClassName("checkout-flight-detail reservation_first")[0];
+				departDate = firstLeg.getElementsByClassName("flight-detail--heading-date")[0].innerHTML.split(" ")[0];
+				departTime = firstLeg.getElementsByClassName("time--value")[0].innerHTML.split("/span>")[1].split("<span")[0];
+				departAMPM = firstLeg.getElementsByClassName("time--period")[0].innerHTML;
+				airportCode = firstLeg.getElementsByClassName("flight-segments--airport-code")[0].innerHTML;
+
+			departDateTime = new Date();
+				departDateTime.setMonth(parseInt(departDate.split("/")[0]) - 1);
+				departDateTime.setDate(parseInt(departDate.split("/")[1]));
+				departDateTime.setFullYear(parseInt("20"+departDate.split("/")[2]));
+				if(departAMPM=="PM"){
+					departDateTime.setHours(parseInt(departTime.split(":")[0])+12);
+					}
+					else {
+						departDateTime.setHours(parseInt(departTime.split(":")[0]));
+						}
+				departDateTime.setMinutes(parseInt(departTime.split(":")[1]));
+				departDateTime.setSeconds(0);
+				departDateTime.setMilliseconds(0);
+
+			checkinDate = new Date(departDateTime.getTime());
+			    checkinDate.setDate(departDateTime.getDate() - 1);
+		}
+		catch (e){
+			alert('Error: '+e);
+			return;
+		}
+}
+function launchDelay()
+{
+	try{
+		getReservationInfo();
+		month = checkinDate.getMonth() + 1;
+		day = checkinDate.getDate();
+		year = checkinDate.getFullYear();
+		hour = checkinDate.getHours();
+		minute = checkinDate.getMinutes();
+
+		secondsValues = []
+		secondsArray = document.getElementsByName('seconds')
+		for (var i=0, iLen=secondsArray.length; i<iLen; i++) {
+		    if (secondsArray[i].checked) {
+	      		secondsValues.push(secondsArray[i].value);
+		    }
+		}
+
+		if(!Array.isArray(secondsValues) || !secondsValues.length) {
+			alert("You must select at least once delay choice.");
+		}
+		else{
+			function openTab(item) {
+			if(item == 59) {minVar = parseInt(minute) - 1} else {minVar = minute}
+			window.open('https://www.southwest.com/air/check-in/index.html?confirmationNumber='+confNumber+'&passengerFirstName='+firstName+'&passengerLastName='+lastName+'&validate=false&month='+month+'&day='+day+'&year='+year+'&hour='+hour+'&minute='+minVar+'&second='+item+'&autostart=true','_blank');
+			}
+			secondsValues.forEach(openTab);
+		}
+		}
+
+	catch(e){
+		 alert('An error has occurred: '+e.message)
+        return;
+	}
+}
+function editPage () {
+		var reservationDiv = document.getElementsByClassName("air-manage-reservation-view-page")[0];
+		var checkinDiv = document.createElement("div");
+		checkinDiv.setAttribute('id','checkInOptions');
+		var headerTitle = document.createElement("h2");
+		headerTitle.setAttribute('class','heading heading_medium retrieve-reservation-form-container--form-title');
+		headerTitle.innerHTML = "Check-in options.";
+		var headerText = document.createElement("p");
+		headerText.setAttribute('class','air-check-in-index-page--description');
+		headerText.innerHTML = "Auto Check-In option \"Exact Time\" is set as 24 hours prior to scheduled departure using Southwest's servers ("+checkinDate+") and is checked by default. You may open multiple tabs if you wish using the other checkboxes below.";
+		var delayForm = document.createElement("form");
+		delayForm.setAttribute('class','form confirmation-number-form');
+		var delayFormDiv1 = document.createElement("div");
+		delayFormDiv1.setAttribute('class','form-control form-control_full');
+		delayFormDiv1.setAttribute('style','text-align:center !important');
+
+		var chkBox1 = document.createElement("input");
+		chkBox1.setAttribute('id','seconds-neg1');
+		chkBox1.setAttribute('name','seconds');
+		chkBox1.setAttribute('type','checkbox');
+		chkBox1.setAttribute('value','59');
+
+		var chkBox2 = document.createElement("input");
+		chkBox2.setAttribute('id','seconds-0');
+		chkBox2.setAttribute('name','seconds');
+		chkBox2.setAttribute('type','checkbox');
+		chkBox2.setAttribute('value','00');
+		chkBox2.checked = true;
+
+		var chkBox3 = document.createElement("input");
+		chkBox3.setAttribute('id','seconds-1');
+		chkBox3.setAttribute('name','seconds');
+		chkBox3.setAttribute('type','checkbox');
+		chkBox3.setAttribute('value','01');
+
+		var chkBox4 = document.createElement("input");
+		chkBox4.setAttribute('id','seconds-2');
+		chkBox4.setAttribute('name','seconds');
+		chkBox4.setAttribute('type','checkbox');
+		chkBox4.setAttribute('value','02');
+
+		var chkBox5 = document.createElement("input");
+		chkBox5.setAttribute('id','seconds-5');
+		chkBox5.setAttribute('name','seconds');
+		chkBox5.setAttribute('type','checkbox');
+		chkBox5.setAttribute('value','05');
+
+		var chkBox6 = document.createElement("input");
+		chkBox6.setAttribute('id','seconds-10');
+		chkBox6.setAttribute('name','seconds');
+		chkBox6.setAttribute('type','checkbox');
+		chkBox6.setAttribute('value','10');
+
+		var chkBox7 = document.createElement("input");
+		chkBox7.setAttribute('id','seconds-30');
+		chkBox7.setAttribute('name','seconds');
+		chkBox7.setAttribute('type','checkbox');
+		chkBox7.setAttribute('value','30');
+
+		var chkBox8 = document.createElement("input");
+		chkBox8.setAttribute('id','seconds-58');
+		chkBox8.setAttribute('name','seconds');
+		chkBox8.setAttribute('type','checkbox');
+		chkBox8.setAttribute('value','58');
+
+		var submitButtonDiv = document.createElement("div");
+		submitButtonDiv.setAttribute("class","form-control")
+		submitButtonDiv.setAttribute("style","margin-left:auto !important; margin-right:auto !important; text-align:center !important; display:block !important; min-height:0px !important");
+
+		var submitButton = document.createElement("input");
+		submitButton.setAttribute("id","delay-button");
+		submitButton.setAttribute("class","actionable actionable_button actionable_large-button actionable_no-outline actionable_primary button submit-button");
+		submitButton.setAttribute("type","button");
+		submitButton.setAttribute("style","background-color: #0036ff !important; color: white !important; text-align:center; margin-left:auto!important; margin-right:auto !important");
+		submitButton.setAttribute("value","Launch Auto Check In");
+		submitButton.addEventListener("click", launchDelay, true);
+
+
+		/* <h2 class="heading heading_medium retrieve-reservation-form-container--form-title"><div>Check-in options.<p class="air-check-in-index-page--description">Auto Check-In option "Exact Time" is set as 24 hours prior to scheduled departure using Southwest's servers and is checked by default. You may open multiple tabs if you wish using the other checkboxes below.</p></div></h2>
+                <form class="form confirmation-number-form"><div class="form-control form-control_full" style="text-align:center !important">
+                <input id="seconds-neg1" name="seconds" type="checkbox" value="59"  tabindex="9" />
+                1 second early
+                <input id="seconds-0" name="seconds" type="checkbox" value="00"  tabindex="10" checked />
+                Exact Time
+                <input id="seconds-1" name="seconds" type="checkbox" value="01" tabindex="11" />
+                1 second late
+                <input id="seconds-2" name="seconds" type="checkbox" value="02" tabindex="12" />
+                2 seconds late<br />
+                <input id="seconds-5" name="seconds" type="checkbox" value="05" tabindex="13" />
+                5 seconds late
+                <input id="seconds-10" name="seconds" type="checkbox" value="10" tabindex="14" />
+                10 seconds late
+                <input id="seconds-30" name="seconds" type="checkbox" value="30" tabindex="15" />
+                30 seconds late
+                <input id="seconds-58" name="seconds" type="checkbox" value="58" tabindex="16" />
+                58 seconds late </div>
+                <div class="form-control" style="margin-left:auto !important; margin-right:auto !important; text-align:center !important; display:block !important; min-height:0px !important"><input id="delay-button" class="actionable actionable_button actionable_large-button actionable_no-outline actionable_primary button submit-button" type="button" style="background-color: #0036ff !important; color: white !important; text-align:center; margin-left:auto!important; margin-right:auto !important" value="Launch Auto Check In" tabindex="17" onclick="launchDelay()"/></div>
+            </form>*/
+			delayFormDiv1.appendChild(chkBox1);
+			delayFormDiv1.innerHTML += "1 second early";
+			delayFormDiv1.appendChild(chkBox2);
+			delayFormDiv1.innerHTML += "Exact Time";
+			delayFormDiv1.appendChild(chkBox3);
+			delayFormDiv1.innerHTML += "1 second after";
+			delayFormDiv1.appendChild(chkBox4);
+			delayFormDiv1.innerHTML += "2 seconds after";
+			delayFormDiv1.appendChild(chkBox5);
+			delayFormDiv1.innerHTML += "5 seconds after";
+			delayFormDiv1.appendChild(chkBox6);
+			delayFormDiv1.innerHTML += "10 seconds after";
+			delayFormDiv1.appendChild(chkBox7);
+			delayFormDiv1.innerHTML += "30 seconds after";
+			delayFormDiv1.appendChild(chkBox8);
+			delayFormDiv1.innerHTML += "58 seconds after";
+
+			submitButtonDiv.appendChild(submitButton);
+
+			delayForm.appendChild(delayFormDiv1);
+			delayForm.appendChild(submitButtonDiv);
+
+			checkinDiv.appendChild(headerTitle);
+			checkinDiv.appendChild(headerText);
+			checkinDiv.appendChild(delayForm);
+
+			reservationDiv.appendChild(checkinDiv);
+}
+
+////////////// WAIT FOR PAGE TO LOAD BEFORE RUNNING SCRIPT ///////////////////////
+
+
+	if (runOncePlease == false){
+		getReservationInfo();
+		editPage();
+		runOncePlease = true;
+	}
 }
