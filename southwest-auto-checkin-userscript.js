@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           Auto Check-In to Southwest Flights
 // @namespace      https://github.com/levydvm/southwest-auto-checkin/
-// @version        2.2
+// @version        2.21
 // @description    Automatically check in to Southwest Airline flights at the appropriate time.
 // @icon           https://www.google.com/s2/favicons?domain=southwest.com
 // @downloadURL    https://cdn.jsdelivr.net/gh/levydvm/southwest-auto-checkin/southwest-auto-checkin-userscript.js
@@ -532,15 +532,15 @@ function getReservationInfo () {
 				airportCode = firstLeg.getElementsByClassName("flight-segments--airport-code")[0].innerHTML;
 
 				departDateMonth = parseInt(departDate.split("/")[0]) - 1;
-                		departDateDay = parseInt(departDate.split("/")[1]);
+				departDateDay = parseInt(departDate.split("/")[1]);
 				departDateYear = parseInt("20"+departDate.split("/")[2]);
 				departTimeHours = parseInt(departTime.split(":")[0]);
-                		if(departAMPM=="PM"){departTimeHours =+ 12;}
+				if(departAMPM=="PM"){departTimeHours =+ 12;}
 				departTimeMinutes = parseInt(departTime.split(":")[1]);
-                        	departDateTime = new Date(departDateYear, departDateMonth, departDateDay, departTimeHours, departTimeMinutes, 0, 0);
+				departDateTime = new Date(departDateYear, departDateMonth, departDateDay, departTimeHours, departTimeMinutes, 0, 0);
 			
 			checkinDate = new Date(departDateTime.getTime());
-			    checkinDate.setDate(departDateTime.getDate() - 1);
+				checkinDate.setDate(departDateTime.getDate() - 1);
 		}
 		catch (e){
 			alert('Error: '+e);
